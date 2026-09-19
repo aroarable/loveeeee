@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sana bir şeyim var 💗</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a0d18" />
+  <style>
+    :root {
+      --bg-1: #1a0d18;
+      --bg-2: #2d1029;
+      --rose: #ff8fbf;
+      --rose-deep: #ea5c9a;
+      --blush: #ffe9f2;
+      --love: #ea80b0;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, var(--bg-2) 0%, var(--bg-1) 70%);
+      color: var(--blush);
+      font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      transition: background 0.8s ease;
+    }
+    body.show-anim { background: #000; }
+
+    /* ---------- Arka plan kalpleri (hafif, sadece transform/opacity) ---------- */
+    #bg-hearts { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+    #bg-hearts span {
+      position: absolute;
+      bottom: -40px;
+      color: var(--rose);
+      opacity: 0;
+      animation: rise linear infinite;
+    }
+    @keyframes rise {
+      0%   { transform: translateY(0) scale(1);       opacity: 0; }
+      15%  { opacity: 0.28; }
+      100% { transform: translateY(-115vh) scale(1.2); opacity: 0; }
+    }
+
+    /* ---------- Soru ekranları ---------- */
+    .step {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 26px;
+      padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+      text-align: center;
+    }
+    .step.active { display: flex; animation: fade 0.5s ease both; }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .heart {
+      width: clamp(56px, 16vw, 84px);
+      height: auto;
+      fill: var(--rose);
+      filter: drop-shadow(0 0 14px rgba(255, 143, 191, 0.55));
+      animation: beat 1.4s ease-in-out infinite;
+    }
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      15%      { transform: scale(1.14); }
+      30%      { transform: scale(1); }
+      45%      { transform: scale(1.09); }
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 18ch;
+      font-size: clamp(1.6rem, 6.6vw, 2.3rem);
+      line-height: 1.25;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      text-shadow: 0 0 18px rgba(255, 143, 191, 0.35);
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: min(100%, 320px);
+    }
+
+    button {
+      font: inherit;
+      font-size: 1.05rem;
+      font-weight: 600;
+      min-height: 52px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--blush);
+      background: transparent;
+      border: 1.5px solid rgba(255, 143, 191, 0.55);
+      transition: transform 0.12s ease, background 0.2s ease;
+    }
+    button:active { transform: scale(0.97); }
+    button.primary {
+      color: #3a0f26;
+      border-color: transparent;
+      background: linear-gradient(135deg, #ffb3d1, var(--rose-deep));
+      box-shadow: 0 6px 22px rgba(234, 92, 154, 0.35);
+    }
+    button:disabled { opacity: 0.45; }
+    button:focus-visible, textarea:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+    textarea {
+      width: min(100%, 320px);
+      height: 120px;
+      resize: none;
+      padding: 14px 16px;
+      font: inherit;
+      font-size: 1rem;
+      color: var(--blush);
+      background: rgba(255, 143, 191, 0.08);
+      border: 1.5px solid rgba(255, 143, 191, 0.45);
+      border-radius: 18px;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    textarea::placeholder { color: rgba(255, 233, 242, 0.5); }
+
+    /* ---------- Foto (sağ tık / uzun basma / sürükleme engelli) ---------- */
+    .photo-wrap {
+      position: relative;
+      width: min(100%, 360px);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1.5px rgba(255, 143, 191, 0.4);
+    }
+    .photo-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 56dvh;
+      max-height: 56vh;
+      object-fit: contain;
+      background: #fff;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+    .photo-wrap::after { content: ""; position: absolute; inset: 0; } /* görünmez kalkan */
+
+    /* ---------- Final animasyonu ---------- */
+    #stage { position: fixed; inset: 0; display: none; overflow: hidden; background: #000; }
+    body.show-anim #stage { display: block; animation: fade 1.2s ease both; }
+
+    /* 450x450'lik orijinal alan, ekrana göre JS ile ölçekleniyor */
+    #ui {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 450px;
+      height: 450px;
+      margin: -225px 0 0 -225px;
+      transform-origin: center center;
+    }
+    #ui .love {
+      position: absolute;
+      top: 0;
+      left: 0;
+      --i: 1;
+    }
+    #ui .love_word {
+      color: var(--love);
+      font-size: 1.4rem;
+      transform: translateY(-100%) rotateZ(-30deg);
+      text-shadow: 0 0 10px #fff;
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+    #ui .love_horizontal {
+      animation: horizontal 10000ms infinite alternate ease-in-out;
+      animation-delay: calc(var(--i) * -300ms);
+    }
+    #ui .love_vertical {
+      animation: vertical 20000ms infinite linear;
+      animation-delay: calc(var(--i) * -300ms);
+    }
+
+    @keyframes horizontal {
+      from { transform: translateX(0px); }
+      to   { transform: translateX(450px); }
+    }
+    @keyframes vertical {
+      0%   { transform: translateY(180px); }
+      10%  { transform: translateY(45px); }
+      15%  { transform: translateY(4.5px); }
+      18%  { transform: translateY(0px); }
+      20%  { transform: translateY(4.5px); }
+      22%  { transform: translateY(34.61538px); }
+      24%  { transform: translateY(64.28571px); }
+      25%  { transform: translateY(112.5px); }
+      26%  { transform: translateY(64.28571px); }
+      28%  { transform: translateY(34.61538px); }
+      30%  { transform: translateY(4.5px); }
+      32%  { transform: translateY(0px); }
+      35%  { transform: translateY(4.5px); }
+      40%  { transform: translateY(45px); }
+      50%  { transform: translateY(180px); }
+      71%  { transform: translateY(428.57143px); }
+      72.5%{ transform: translateY(441.17647px); }
+      75%  { transform: translateY(450px); }
+      77.5%{ transform: translateY(441.17647px); }
+      79%  { transform: translateY(428.57143px); }
+      100% { transform: translateY(180px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #bg-hearts { display: none; }
+      .heart { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <script src="config.js"></script>
+
+  <div id="bg-hearts" aria-hidden="true"></div>
+
+  <!-- 1 -->
+  <section class="step active" id="s-hello">
+    <svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    <h1>Merhaba, nasılsın?</h1>
+    <div class="actions">
+      <button class="primary" data-go="s-q1">İyiyim</button>
+      <button data-go="s-sad">Değilim</button>
+    </div>
+  </section>
+
+  <!-- 2a -->
+  <section class="step" id="s-sad">
+    <h1>Bunun için üzüldüm:(<br>Yapabileceğim bir şey var mı?</h1>
+    <div class="actions">
+      <button class="primary" data-go="s-q1">Şimdilik yok, teşekkürler</button>
+      <button data-go="s-write">İsteğimi yazayım</button>
+    </div>
+  </section>
+
+  <!-- 2b -->
+  <section class="step" id="s-write">
+    <h1>Yaz bakalım, dinliyorum</h1>
+    <textarea id="wish" maxlength="500" placeholder="İsteğini buraya yaz..."></textarea>
+    <div class="actions">
+      <button class="primary" id="send" disabled>Gönder</button>
+    </div>
+  </section>
+
+  <section class="step" id="s-thanks">
+    <svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    <h1>Üzüldüm Buna Elimden Geleni Yapıcağım Merak Etme 💗</h1>
+  </section>
+
+  <!-- Yeni sorular -->
+  <section class="step" id="s-q1">
+    <h1>Bir şey soracağım, Bugün aklına geldim mi?</h1>
+    <div class="actions">
+      <button class="primary" data-go="s-q2">Geldin tabii</button>
+      <button data-go="s-q2">Belki biraz 🙈</button>
+    </div>
+  </section>
+
+  <section class="step" id="s-q2">
+    <h1>Benimle konuşurken<br>ya da görüşürken<br>nasıl hissediyorsun?</h1>
+    <div class="actions">
+      <button class="primary" data-go="s-q3">Çok rahat</button>
+      <button data-go="s-q3">Biraz heyecanlı</button>
+      <button data-go="s-q3">Daha çok görüşelim de anlayayım</button>
+    </div>
+  </section>
+
+  <section class="step" id="s-q3">
+    <h1>Bir günümüz olsa<br>ne yapardık?</h1>
+    <div class="actions">
+      <button data-go="s-ready">Deniz kenarında yürüyüş</button>
+      <button data-go="s-ready">Film ve bir sürü atıştırmalık</button>
+      <button class="primary" data-go="s-ready">Sürpriz olsun</button>
+    </div>
+  </section>
+
+  <!-- Son soru -->
+  <section class="step" id="s-ready">
+    <h1>Son bir şey kaldı.<br>Hazır mısın?</h1>
+    <div class="actions">
+      <button class="primary" data-go="s-anim">Evet</button>
+      <button data-go="s-sure">Hayır</button>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="step" id="s-sure">
+    <h1>Emin misin?</h1>
+    <div class="actions">
+      <button class="primary" data-go="s-miss">Evet</button>
+      <button data-go="s-anim">Yok ya, hazırım</button>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="step" id="s-miss">
+    <h1>Bak, güzel bir şeyi kaçıracaksın</h1>
+    <div class="actions">
+      <button class="primary" data-go="s-anim">Tamam, hazırım</button>
+      <button data-go="s-photo">Eminim, hayır</button>
+    </div>
+  </section>
+
+  <!-- 6: foto -->
+  <section class="step" id="s-photo">
+    <div class="photo-wrap"><img src="foto.png" alt="" draggable="false" /></div>
+    <div class="actions">
+      <button data-go="s-anim">Fikrimi değiştirdim</button>
+    </div>
+  </section>
+
+  <!-- 7: animasyon -->
+  <div id="stage"><div id="ui"></div></div>
+
+  <script>
+    /* ===== İstek kaydı (admin.html burayı okur) ===== */
+    const CFG = window.LOVE_CONFIG || {};
+
+    function sendWish(text) {
+      try {   // test için bu cihazda da sakla
+        const all = JSON.parse(localStorage.getItem('love_wishes') || '[]');
+        all.push({ text: text, t: Date.now() });
+        localStorage.setItem('love_wishes', JSON.stringify(all));
+      } catch (e) {}
+      if (CFG.ntfyTopic) {
+        fetch('https://ntfy.sh/' + encodeURIComponent(CFG.ntfyTopic), {
+          method: 'POST',
+          body: text,
+          keepalive: true
+        }).catch(() => {});
+      }
+    }
+
+    /* ===== Ekran geçişleri ===== */
+    const steps = document.querySelectorAll('.step');
+    let animStarted = false;
+
+    function show(id) {
+      if (id === 's-anim') { startAnimation(); return; }
+      steps.forEach(s => s.classList.toggle('active', s.id === id));
+    }
+
+    document.addEventListener('click', e => {
+      const b = e.target.closest('[data-go]');
+      if (b) show(b.dataset.go);
+    });
+
+    /* ===== İstek yazma ===== */
+    const wish = document.getElementById('wish');
+    const send = document.getElementById('send');
+    wish.addEventListener('input', () => { send.disabled = !wish.value.trim(); });
+
+    send.addEventListener('click', () => {
+      const text = wish.value.trim();
+      if (!text) return;
+      sendWish(text);
+      show('s-thanks');
+      setTimeout(() => show('s-q1'), 1800);
+    });
+
+    /* ===== Arka plan kalpleri ===== */
+    (function () {
+      const box = document.getElementById('bg-hearts');
+      for (let i = 0; i < 12; i++) {
+        const s = document.createElement('span');
+        s.textContent = '♥';
+        s.style.left = (Math.random() * 96) + '%';
+        s.style.fontSize = (12 + Math.random() * 20) + 'px';
+        s.style.animationDuration = (9 + Math.random() * 8) + 's';
+        s.style.animationDelay = (-Math.random() * 12) + 's';
+        box.appendChild(s);
+      }
+    })();
+
+    /* ===== Final animasyonu ===== */
+    const ui = document.getElementById('ui');
+
+    // Orijinal düzen 450x450 alan + sağa taşan yazılar (~600x500) kaplar.
+    // Ekrana sığacak şekilde ölçekle ve görsel merkezi ortala.
+    function fit() {
+      const w = window.innerWidth, h = window.innerHeight;
+      const s = Math.min(w / 610, h / 520);
+      ui.style.transform = 'translate(' + (-65 * s) + 'px,' + (12 * s) + 'px) scale(' + s + ')';
+    }
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', fit);
+
+    function startAnimation() {
+      if (animStarted) return;
+      animStarted = true;
+
+      // Telefonda daha az öğe = takılma yok
+      const N = window.innerWidth < 600 ? 80 : 100;
+      const frag = document.createDocumentFragment();
+
+      for (let i = 1; i <= N; i++) {
+        const love = document.createElement('div');
+        love.className = 'love';
+        love.style.setProperty('--i', i);
+
+        const h = document.createElement('div');
+        h.className = 'love_horizontal';
+        const v = document.createElement('div');
+        v.className = 'love_vertical';
+        const word = document.createElement('div');
+        word.className = 'love_word';
+        word.textContent = 'I love you';
+
+        v.appendChild(word);
+        h.appendChild(v);
+        love.appendChild(h);
+        frag.appendChild(love);
+      }
+      ui.appendChild(frag);
+      fit();
+
+      steps.forEach(s => s.classList.remove('active'));
+      document.getElementById('bg-hearts').remove();
+      document.body.classList.add('show-anim');
+    }
+
+    /* ===== Sağ tık / sürükleme / uzun basma engeli ===== */
+    ['contextmenu', 'dragstart', 'selectstart'].forEach(ev => {
+      document.addEventListener(ev, e => {
+        if (e.target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+      });
+    });
+  </script>
+</body>
+</html>
